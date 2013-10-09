@@ -132,7 +132,6 @@ class Convert_UI(QtGui.QWidget):
         QtCore.QObject.connect(self.ui.TestCaseLocation_lineEdit, QtCore.SIGNAL("returnPressed()"), self.lineEditPressed)
 
     def lineEditPressed(self):
-        #print "Enter key is pressed"
         testcaselocation = str(self.ui.TestCaseLocation_lineEdit.displayText())
         if os.path.exists(testcaselocation):
              self.fetch_testsuites()
@@ -144,46 +143,34 @@ class Convert_UI(QtGui.QWidget):
             model.clear()
             
     def fetch_testsuites(self):
+        global suites
         self.ui.Result_textEdit.clear()
         self.ui.TestCase_treeView.setHeaderHidden(True)
         self.ui.TestCase_treeView.setModel(model)
         testcaselocation = self.ui.TestCaseLocation_lineEdit.displayText()
         boolval = False
-        #print directory
-        print testcaselocation
         testcaselocation = str(testcaselocation)
-        global suites
         suites = []
         suitenames = []
         if os.path.exists(testcaselocation):
             for dirn,dir,files in os.walk(testcaselocation):
-                #print 'yes'
                 for file in files:
                     file = file.lower()
                     if 'config.ini' in file:
-                        #print 'yes'
                         boolval = True
                 if 'suite_' in dirn:
                     suitedir = os.path.basename(dirn)
                     if 'suite_' in suitedir:
-                    #print suitedir
                         suitenames.append(suitedir)
                         suites.append(dirn)
-        #print boolval
-        #print dirn
-        print suites
         for num,text in enumerate(suites):
-            #print num
-            #print text
             suitename = str(os.path.basename(text))
-            #print suitename
             item = QtGui.QStandardItem('%s' % suitename)
             item.setCheckState(Qt.Unchecked)
             item.setCheckable(True)
             item.setEditable(False)
             item.setText('%s' % suitename)
             model.appendRow(item)
-            #self.ui.TestCase_listView.appendRow(item)
             contents = os.listdir(text)
             for each in contents:
                 each = each.lower()
@@ -192,32 +179,23 @@ class Convert_UI(QtGui.QWidget):
                     fh = open(filepath, 'rb')
                     testcases = []
                     for line in fh:
-                        #print line
                         if 'tests=' in line:
                             line = line.replace("\r\n", "")
                             line = line.split("=")
-                            #print line
                             tests = line[1].split(",")
-                            #print tests
                             for i in tests:
                                 testcases.append(i)
-                   # print testcases
                     for row,test in enumerate(testcases):
-                    #    print test
                         item1 = QtGui.QStandardItem('%s' % test)
                         item1.setCheckState(Qt.Unchecked)
                         item1.setCheckable(True)
                         item1.setEditable(False)
                         item1.setText('%s' % test)
                         item.appendRow(item1)
-           # model.appendRow(item)     
-            
         if boolval == False:
             self.ui.Result_textEdit.setTextColor(Qt.red)
             self.ui.Result_textEdit.setText('Test cases are not found.\nPlease select appropriate directory.')
             model.clear()
-            #model1 = QtGui.QStandardItemModel()
-            #self.ui.TestCase_treeView.setModel(model1)
         self.ui.Result_textEdit.setTextColor(Qt.black)
         
     def browse_testcase_dir(self):
@@ -227,9 +205,7 @@ class Convert_UI(QtGui.QWidget):
         dialog.setDirectory(directory)
         self.ui.TestCaseLocation_lineEdit.setText(directory)
         testcaselocation = str(self.ui.TestCaseLocation_lineEdit.displayText())
-        print testcaselocation
         if testcaselocation != "" and testcaselocation != " ":
-            #print 'yes'
             self.fetch_testsuites()
 
     def browse_result_dir(self):
@@ -239,11 +215,9 @@ class Convert_UI(QtGui.QWidget):
         dialog1.setDirectory(directory)
         self.ui.ResultLocation_lineEdit.setText(directory)
         resultlocation = self.ui.ResultLocation_lineEdit.displayText()
-        #print directory
-        #print resultlocation
 
     def OK_clicked(self):
-        print 'OK button is clicked'
+        self.ui.Result_textEdit.clear()
         testcaselocation = str(self.ui.TestCaseLocation_lineEdit.displayText())
         resultlocation = str(self.ui.ResultLocation_lineEdit.displayText())
         if os.path.exists(testcaselocation) and os.path.exists(resultlocation):
@@ -254,16 +228,11 @@ class Convert_UI(QtGui.QWidget):
                 resultdir = os.path.join(str(resultlocation), parentdir1[1])
             else:
                 for dirn,dir,files in os.walk(testcaselocation):
-                    #print dirn
                     listdir=os.listdir(dirn)
-                    #print listdir
                     for each in listdir:
                         if 'suite_' in each:
-                            #print dirn
                             parentdirectory = os.path.split(dirn)
                             resultdir = os.path.join(str(resultlocation), parentdirectory[1])
-            #print parentdir
-            #print resultdir
             if os.path.exists(resultdir):
                 shutil.rmtree(resultdir, ignore_errors='true')
             else:
@@ -273,20 +242,15 @@ class Convert_UI(QtGui.QWidget):
                     for i in range(0,model.rowCount()):
                         modelitem = model.item(i)
                         if modelitem.checkState() == 2:
-                            #print modelitem.text()
                             children = []
                             for j in range(0,modelitem.rowCount()):
                                 childitem = modelitem.child(j)
                                 if childitem.checkState() == 2:
-                                    #print childitem.text()
                                     children.append(str(childitem.text()))
-                            #print children
                             if len(children) != 0:
-                                #print suites[i]
                                 sourcedir = suites[i]
                                 suitename = os.path.split(sourcedir)
                                 self.setWindowTitle("Executing tests....")
-                                #print sourcedir
                                 config_temp_path = os.path.join(suites[i],"config_temp.ini")
                                 config_path = os.path.join(suites[i],"config.ini")
                                 fh = open(config_temp_path, "w+")
@@ -298,7 +262,6 @@ class Convert_UI(QtGui.QWidget):
                                         newline = newline.replace("]","")
                                         newline = newline.replace(" ","")
                                         newline = newline.replace("'","")
-                                        #print newline
                                         fh.write(newline)
                                     else:
                                         fh.write(line)
@@ -311,13 +274,8 @@ class Convert_UI(QtGui.QWidget):
                                     if os.path.exists(config_temp_path):
                                         os.chdir(suites[i])
                                         subprocess.Popen(["nosetests", "-c", "config_temp.ini"])
-                                        #print i
                                         fh.close()
                                         fh1.close()
-                                        #print sourcedir
-                                        #print destidir
-                                    #os.remove(config_temp_path)
-                                #os.system(command)    
                                         sys.path.append("..")
                                         import main_index
                                         time.sleep(5)
@@ -330,7 +288,6 @@ class Convert_UI(QtGui.QWidget):
                                     self.ui.Result_textEdit.setTextColor(Qt.red)
                                     mesg = ("Suite: %s not executed successfully" % suitename[1])
                                     self.ui.Result_textEdit.append(mesg)
-            #os.chdir(resultdir)
             self.ui.Result_textEdit.setTextColor(Qt.black)
             if os.path.exists(resultdir):
                 main_index.write_main_index(str(resultdir))
@@ -349,11 +306,7 @@ class Convert_UI(QtGui.QWidget):
             self.ui.Result_textEdit.setTextColor(Qt.red)
             mesg = ("Test case directory and result location are not valid. Please verify.")
             self.ui.Result_textEdit.append(mesg)
-            
-            
-                        #print os.getcwd()
-        #for i in model.selectedItems():
-        #    print i
+
     def closeEvent(self, event):
         reply = QtGui.QMessageBox.question(self, 'Exit',"Do you want to exit?", QtGui.QMessageBox.Yes | QtGui.QMessageBox.No, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
@@ -364,33 +317,19 @@ class Convert_UI(QtGui.QWidget):
         self.close()
 
     def current_selection(self, index):
-        #print index
         itemtext = index.model().itemFromIndex(index).text()
         selecteditem = index.model().itemFromIndex(index)
         itemindex = selecteditem.index()
-        #print itemindex
         if selecteditem.checkState() == 2:
             if selecteditem.hasChildren() == False:
                 parentitem = selecteditem.parent()
-                print parentitem
                 parentitem.setCheckState(Qt.Checked)
-##            if selecteditem.hasChildren() == True:
-##                row = selecteditem.rowCount()
-##                #print row
-##                for i in range(0, selecteditem.rowCount()):
-##                    childitem = selecteditem.child(i)
-##                    childitem.setCheckState(Qt.Checked)
         elif selecteditem.checkState() == 0:
             if selecteditem.hasChildren() == True:
                 row = selecteditem.rowCount()
-                #print row
                 for i in range(0, selecteditem.rowCount()):
                     childitem = selecteditem.child(i)
                     childitem.setCheckState(Qt.Unchecked)
-                    #print index.model().itemFromIndex(childitem).text()
-                    #print newItem
-    #            print selecteditem.takeChild(row)
-            
 
 def main():
     app = QtGui.QApplication(sys.argv)
